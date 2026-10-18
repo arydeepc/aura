@@ -1,0 +1,17 @@
+﻿{
+  "name": "aura-biosync",
+  "version": "2.0.0",
+  "description": "Aura Fluid Bio-Sync Native Capacitor Build",
+  "main": "www/index.html",
+  "scripts": {
+    "build": "echo 'Static bundle ready in www'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.0",
+    "@capacitor/core": "^6.1.0",
+    "@capgo/capacitor-native-biometric": "^6.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.0"
+  }
+}

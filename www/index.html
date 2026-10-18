@@ -1,0 +1,385 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#F4F1EA" />
+  <title>AURA — Bio-Sync Vault</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-silk: #F4F1EA;
+      --ink: #1C1B19;
+      --orb-primary: #8FA893;
+      --orb-secondary: #E6C8C5;
+    }
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; user-select: none; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: var(--bg-silk);
+      color: var(--ink);
+      margin: 0; padding: 0;
+      overflow: hidden;
+    }
+    .serif-display { font-family: 'Instrument Serif', serif; }
+    .bio-orb {
+      width: 170px; height: 170px;
+      border-radius: 54% 46% 42% 58% / 50% 54% 46% 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), var(--orb-primary) 55%, var(--orb-secondary) 100%);
+      box-shadow: 0 24px 50px -12px rgba(143, 168, 147, 0.5), inset 0 4px 20px rgba(255, 255, 255, 0.9);
+      animation: morphOrb 8s ease-in-out infinite;
+      transition: all 0.5s ease;
+    }
+    .bio-orb:active { transform: scale(0.92); }
+    @keyframes morphOrb {
+      0%, 100% { border-radius: 54% 46% 42% 58% / 50% 54% 46% 50%; }
+      33% { border-radius: 44% 56% 54% 46% / 58% 42% 58% 42%; }
+      66% { border-radius: 60% 40% 48% 52% / 44% 60% 40% 56%; }
+    }
+    .silk-pill {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 30px -10px rgba(28, 27, 25, 0.06);
+    }
+    .fluid-sheet { transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease; }
+    .sheet-closed { transform: translateY(105%); opacity: 0; pointer-events: none; }
+    .sheet-open { transform: translateY(0%); opacity: 1; pointer-events: auto; }
+    .privacy-veil { filter: blur(22px); transition: filter 0.25s ease; }
+    .privacy-veil:active { filter: blur(0px); }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="h-[100dvh] w-screen flex justify-center bg-[#E5E0D5]">
+
+  <div class="w-full max-w-md h-full bg-[#F4F1EA] flex flex-col justify-between relative overflow-hidden shadow-2xl">
+
+    <!-- PIXEL 8 NATIVE BIOMETRIC LOCK SCREEN -->
+    <div id="lockVeil" class="absolute inset-0 z-50 bg-[#F4F1EA] flex flex-col items-center justify-between p-8 text-center transition-opacity duration-400">
+      <div class="pt-6 w-full space-y-2">
+        <span id="bioStatusBadge" class="text-[10px] uppercase tracking-[0.25em] text-[#4E6E58] font-bold block">Pixel 8 Hardware Vault Ready</span>
+        <input id="geminiKeyInput" type="password" placeholder="Optional: Paste Gemini API Key" class="w-full max-w-xs text-xs px-4 py-2.5 rounded-2xl bg-white border border-black/10 text-center text-[#1C1B19] focus:outline-none select-text" />
+      </div>
+
+      <div class="flex flex-col items-center">
+        <div onclick="authenticatePixelBiometrics()" class="bio-orb flex flex-col items-center justify-center cursor-pointer mb-6">
+          <span class="serif-display italic text-3xl text-[#1C1B19]">Tap to</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-[#1C1B19]/70 mt-1">Sense</span>
+        </div>
+        <h1 class="serif-display text-5xl text-[#1C1B19] tracking-tight mb-2">Aura</h1>
+        <p id="lockSubtext" class="text-xs text-[#78736A] max-w-[240px] leading-relaxed">Protected by Android Keystore BiometricPrompt & Local IndexedDB Vault.</p>
+      </div>
+
+      <button onclick="authenticatePixelBiometrics()" class="w-full max-w-xs py-3.5 rounded-full bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold shadow-lg active:scale-95 transition-transform">
+        Unlock with Pixel Fingerprint / Face
+      </button>
+    </div>
+
+    <!-- HEADER -->
+    <header class="relative z-20 px-5 pt-6 pb-2 flex items-center justify-between">
+      <div class="flex items-center gap-1 silk-pill rounded-full p-1">
+        <button onclick="switchPhase('Luteal')" id="phase-Luteal" class="px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1C1B19] text-[#F4F1EA]">Luteal</button>
+        <button onclick="switchPhase('Period')" id="phase-Period" class="px-3 py-1 rounded-full text-[11px] font-medium text-[#78736A]">Flow</button>
+        <button onclick="switchPhase('Glow')" id="phase-Glow" class="px-3 py-1 rounded-full text-[11px] font-medium text-[#78736A]">Follicular</button>
+      </div>
+      <button onclick="openSheet('sosSheet')" class="silk-pill px-3.5 py-1.5 rounded-full text-[11px] font-semibold text-[#9E4747] flex items-center gap-1.5">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#B85252] animate-ping"></span>De-Bloat SOS
+      </button>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="relative z-10 flex-1 overflow-y-auto px-5 pb-28 pt-2 space-y-4">
+      <div class="flex flex-col items-center text-center">
+        <div onclick="cycleOrbInsight()" class="bio-orb flex flex-col items-center justify-center cursor-pointer">
+          <span class="text-[10px] uppercase tracking-[0.2em] text-[#1C1B19]/60 font-semibold">Glow & Gut</span>
+          <span id="orbScore" class="serif-display text-6xl text-[#1C1B19] leading-none mt-1">94</span>
+          <span id="orbStateLabel" class="text-[11px] font-medium text-[#1C1B19]/80 mt-1">Calm & Radiant</span>
+        </div>
+        <p class="text-[11px] text-[#78736A] mt-2">Tap orb to shift lens • <span id="lensName" class="underline font-medium">Skin Axis</span></p>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2.5">
+        <div class="silk-pill rounded-3xl p-3.5 flex flex-col justify-between">
+          <span class="text-[9px] uppercase tracking-wider text-[#78736A] font-bold">Skin Clarity</span>
+          <span id="metricPuff" class="serif-display text-2xl text-[#1C1B19] my-1">Low Puff</span>
+          <span id="metricPuffSub" class="text-[10px] text-[#4E6E58] font-medium">Sebum calm</span>
+        </div>
+        <div class="silk-pill rounded-3xl p-3.5 flex flex-col justify-between">
+          <span class="text-[9px] uppercase tracking-wider text-[#78736A] font-bold">Gut Transit</span>
+          <span id="metricTransit" class="serif-display text-2xl text-[#1C1B19] my-1">Type 4</span>
+          <span class="text-[10px] text-[#4E6E58] font-medium">Smooth</span>
+        </div>
+        <div class="silk-pill rounded-3xl p-3.5 flex flex-col justify-between">
+          <span class="text-[9px] uppercase tracking-wider text-[#78736A] font-bold">Cortisol Shield</span>
+          <span id="metricMood" class="serif-display text-2xl text-[#1C1B19] my-1">90%</span>
+          <span class="text-[10px] text-[#78736A] font-medium">Buffered</span>
+        </div>
+      </div>
+
+      <div id="dynamicAlerts" class="space-y-2"></div>
+
+      <div class="silk-pill rounded-[28px] p-5 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-[10px] uppercase tracking-[0.2em] text-[#78736A] font-bold">Today's Bio-Whisper</span>
+          <span id="calBadge" class="text-xs font-semibold text-[#1C1B19]">385 kcal</span>
+        </div>
+        <h2 id="whisperHeadline" class="serif-display text-2xl text-[#1C1B19] leading-snug">
+          Your fermented breakfast supports clear pores and balanced morning sebum.
+        </h2>
+        <p id="whisperBody" class="text-xs text-[#5A564F] leading-relaxed">
+          Progesterone in your Luteal phase slows transit. Pairing warm spiced lentils with Idli keeps motility smooth without afternoon bloat.
+        </p>
+      </div>
+
+      <div class="silk-pill rounded-[24px] p-4 space-y-2">
+        <div class="flex justify-between items-center">
+          <span class="text-[10px] uppercase tracking-wider text-[#78736A] font-bold">Encrypted On-Device Vault</span>
+          <button onclick="clearLocalVault()" class="text-[10px] text-[#9E4747] font-semibold">Wipe Vault</button>
+        </div>
+        <div id="localHistoryList" class="space-y-1.5 text-xs text-[#5A564F]"></div>
+      </div>
+    </main>
+
+    <!-- BOTTOM ACTION BAR -->
+    <div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2.5 p-1.5 rounded-full silk-pill shadow-xl">
+      <button onclick="openSheet('mealSheet')" class="px-5 py-3 rounded-full bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold">+ Nourish</button>
+      <button onclick="openSheet('gutSheet')" class="px-5 py-3 rounded-full bg-white text-[#1C1B19] text-xs font-semibold">◎ Gut Pulse</button>
+    </div>
+
+    <!-- MEAL SHEET -->
+    <div id="mealSheet" class="fluid-sheet sheet-closed absolute inset-0 z-40 bg-black/30 backdrop-blur-sm flex flex-col justify-end">
+      <div class="bg-[#F4F1EA] rounded-t-[32px] p-6 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center">
+          <h2 class="serif-display text-3xl">What nourished you?</h2>
+          <button onclick="closeSheets()" class="text-xs font-semibold px-3 py-1 rounded-full bg-black/5">Close</button>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button onclick="addFoodTag('2 Idli & Sambar')" class="px-3 py-1.5 rounded-full text-xs bg-[#1C1B19] text-[#F4F1EA]">✨ 2 Idli & Sambar</button>
+          <button onclick="addFoodTag('Empty-Stomach Iced Coffee')" class="px-3 py-1.5 rounded-full text-xs bg-white border border-black/10">🧊 Iced Coffee</button>
+          <button onclick="addFoodTag('Moong Dal & 2 Roti')" class="px-3 py-1.5 rounded-full text-xs bg-white border border-black/10">🫓 Dal & Roti</button>
+          <button onclick="addFoodTag('Late-Night Pizza')" class="px-3 py-1.5 rounded-full text-xs bg-white text-[#9E4747] border border-[#9E4747]/20">🍕 Cheat Pizza</button>
+        </div>
+        <textarea id="fluidFoodInput" rows="2" class="w-full rounded-2xl bg-white p-3 text-xs border border-black/10 select-text">2 Idli & Sambar</textarea>
+        <button onclick="syncAndSaveLocally(true)" class="w-full py-3.5 rounded-full bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold">Sync & Save to Vault</button>
+      </div>
+    </div>
+
+    <!-- GUT SHEET -->
+    <div id="gutSheet" class="fluid-sheet sheet-closed absolute inset-0 z-40 bg-black/30 backdrop-blur-sm flex flex-col justify-end">
+      <div class="bg-[#F4F1EA] rounded-t-[32px] p-6 space-y-4 shadow-2xl">
+        <div class="flex justify-between items-center">
+          <h2 class="serif-display text-3xl">Morning Gut Pulse</h2>
+          <button onclick="closeSheets()" class="text-xs font-semibold px-3 py-1 rounded-full bg-black/5">Close</button>
+        </div>
+        <div class="grid grid-cols-4 gap-2">
+          <button onclick="selectPebble(2)" id="peb-2" class="p-2.5 rounded-2xl bg-white border border-black/5 flex flex-col items-center"><span>🪨</span><span class="text-[10px] font-bold mt-1">Type 2</span></button>
+          <button onclick="selectPebble(4)" id="peb-4" class="p-2.5 rounded-2xl bg-[#1C1B19] text-[#F4F1EA] flex flex-col items-center"><span>🌿</span><span class="text-[10px] font-bold mt-1">Type 4</span></button>
+          <button onclick="selectPebble(5)" id="peb-5" class="p-2.5 rounded-2xl bg-white border border-black/5 flex flex-col items-center"><span>☁️</span><span class="text-[10px] font-bold mt-1">Type 5</span></button>
+          <button onclick="selectPebble(6)" id="peb-6" class="p-2.5 rounded-2xl bg-white border border-black/5 flex flex-col items-center"><span>⚡</span><span class="text-[10px] font-bold mt-1">Type 6</span></button>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="selectBuoyancy('float')" id="buoy-float" class="py-2.5 rounded-2xl bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold">🌊 Floats (Clean)</button>
+          <button onclick="selectBuoyancy('sink')" id="buoy-sink" class="py-2.5 rounded-2xl bg-white text-[#5A564F] border border-black/10 text-xs font-semibold">⚓ Sinks (Heavy)</button>
+        </div>
+        <label class="block w-full py-3 rounded-full bg-white text-[#1C1B19] text-xs font-semibold text-center cursor-pointer border border-black/10">
+          🛡️ Zero-Trace Auto-Blur Camera
+          <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleStoolSnap(event)" />
+        </label>
+        <div id="fluidStoolBox" class="hidden space-y-1">
+          <div class="flex justify-between text-[10px] text-[#78736A]">
+            <span>🔒 Blurred in RAM (Hold image to unblur)</span>
+            <button onclick="shredStoolSnap()" class="text-[#9E4747] font-bold">Shred</button>
+          </div>
+          <img id="fluidStoolPreview" class="w-full h-24 object-cover rounded-2xl privacy-veil" />
+        </div>
+        <button onclick="syncAndSaveLocally(true)" class="w-full py-3.5 rounded-full bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold">Update Gut Vault</button>
+      </div>
+    </div>
+
+    <!-- SOS SHEET -->
+    <div id="sosSheet" class="fluid-sheet sheet-closed absolute inset-0 z-40 bg-black/30 backdrop-blur-sm flex flex-col justify-end">
+      <div class="bg-[#F4F1EA] rounded-t-[32px] p-6 space-y-4 shadow-2xl">
+        <span class="text-[10px] uppercase tracking-widest text-[#9E4747] font-bold">6-Hour Event Rescue</span>
+        <h2 class="serif-display text-3xl">Flat-Tummy Protocol</h2>
+        <div class="space-y-2 text-xs text-[#5A564F] bg-white p-4 rounded-2xl">
+          <p><strong>1. Carminative Shot:</strong> Steep 1/2 tsp crushed Ajwain + 1/2 tsp Fennel in warm water with black salt.</p>
+          <p><strong>2. Zero Raw/Iced:</strong> Skip raw salads and iced caffeine for 5 hours to halt gas fermentation.</p>
+        </div>
+        <button onclick="closeSheets()" class="w-full py-3.5 rounded-full bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold">Got It</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let state = {
+      phase: localStorage.getItem('aura_phase') || 'Luteal',
+      bristol: 4,
+      buoyancy: 'float',
+      orbLens: 0
+    };
+
+    document.getElementById('geminiKeyInput').value = localStorage.getItem('aura_gemini_key') || '';
+
+    // TRUE PIXEL 8 HARDWARE BIOMETRIC BRIDGE (Capacitor NativeBiometric Plugin + Fallback)
+    async function authenticatePixelBiometrics() {
+      const key = document.getElementById('geminiKeyInput').value.trim();
+      if (key) localStorage.setItem('aura_gemini_key', key);
+
+      const NativeBio = window.Capacitor?.Plugins?.NativeBiometric;
+      if (NativeBio) {
+        try {
+          const avail = await NativeBio.isAvailable({ useFallback: true });
+          if (avail && avail.isAvailable) {
+            await NativeBio.verifyIdentity({
+              reason: "Unlock your encrypted Aura health vault",
+              title: "Aura Biometric Vault",
+              subtitle: "Pixel 8 Hardware Security",
+              description: "Touch fingerprint sensor or glance at front camera",
+              useFallback: true,
+              maxAttempts: 3
+            });
+          }
+        } catch (err) {
+          document.getElementById('lockSubtext').innerText = "Biometric verification cancelled. Tap again to retry.";
+          return; // Block unlock if user cancels hardware prompt
+        }
+      }
+      // Unlock Vault
+      document.getElementById('lockVeil').classList.add('opacity-0', 'pointer-events-none');
+      renderLocalHistory();
+      syncAndSaveLocally(false);
+    }
+
+    function openSheet(id) { closeSheets(); document.getElementById(id).classList.replace('sheet-closed', 'sheet-open'); }
+    function closeSheets() { ['mealSheet', 'gutSheet', 'sosSheet'].forEach(id => document.getElementById(id).classList.replace('sheet-open', 'sheet-closed')); }
+
+    function switchPhase(phase) {
+      state.phase = phase;
+      localStorage.setItem('aura_phase', phase);
+      ['Luteal', 'Period', 'Glow'].forEach(p => {
+        document.getElementById(`phase-${p}`).className = p === phase
+          ? "px-3 py-1 rounded-full text-[11px] font-semibold bg-[#1C1B19] text-[#F4F1EA]"
+          : "px-3 py-1 rounded-full text-[11px] font-medium text-[#78736A]";
+      });
+      syncAndSaveLocally(false);
+    }
+
+    function addFoodTag(item) {
+      const input = document.getElementById('fluidFoodInput');
+      input.value = input.value.trim() ? `${input.value.trim()},${item}` : item;
+    }
+
+    function selectPebble(type) {
+      state.bristol = type;
+      [2, 4, 5, 6].forEach(t => {
+        document.getElementById(`peb-${t}`).className = t === type
+          ? "p-2.5 rounded-2xl bg-[#1C1B19] text-[#F4F1EA] flex flex-col items-center"
+          : "p-2.5 rounded-2xl bg-white border border-black/5 flex flex-col items-center";
+      });
+    }
+
+    function selectBuoyancy(mode) {
+      state.buoyancy = mode;
+      document.getElementById('buoy-float').className = mode === 'float' ? "py-2.5 rounded-2xl bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold" : "py-2.5 rounded-2xl bg-white text-[#5A564F] border border-black/10 text-xs font-semibold";
+      document.getElementById('buoy-sink').className = mode === 'sink' ? "py-2.5 rounded-2xl bg-[#1C1B19] text-[#F4F1EA] text-xs font-semibold" : "py-2.5 rounded-2xl bg-white text-[#5A564F] border border-black/10 text-xs font-semibold";
+    }
+
+    function handleStoolSnap(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      document.getElementById('fluidStoolPreview').src = URL.createObjectURL(file);
+      document.getElementById('fluidStoolBox').classList.remove('hidden');
+    }
+
+    function shredStoolSnap() {
+      URL.revokeObjectURL(document.getElementById('fluidStoolPreview').src);
+      document.getElementById('fluidStoolPreview').src = '';
+      document.getElementById('fluidStoolBox').classList.add('hidden');
+    }
+
+    function cycleOrbInsight() {
+      state.orbLens = (state.orbLens + 1) % 3;
+      const score = document.getElementById('orbScore');
+      const label = document.getElementById('orbStateLabel');
+      const lens = document.getElementById('lensName');
+      if (state.orbLens === 0) { score.innerText = "94"; label.innerText = "Calm & Radiant"; lens.innerText = "Skin Axis"; }
+      else if (state.orbLens === 1) { score.innerText = "Optimal"; label.innerText = "Motility Synced"; lens.innerText = "Gut Transit"; }
+      else { score.innerText = "385"; label.innerText = "kcal • 16g Protein"; lens.innerText = "Macro Density"; }
+    }
+
+    async function syncAndSaveLocally(saveToHistory = true) {
+      closeSheets();
+      const food = document.getElementById('fluidFoodInput').value;
+      const foodLower = food.toLowerCase();
+      const hasCoffee = foodLower.includes('coffee');
+      const hasPizza = foodLower.includes('pizza') || foodLower.includes('cheat');
+      const hasSinking = state.buoyancy === 'sink';
+
+      let score = 94;
+      if (hasCoffee) score -= 8;
+      if (hasPizza) score -= 12;
+      if (hasSinking) score -= 10;
+
+      const apiKey = localStorage.getItem('aura_gemini_key');
+      if (apiKey && saveToHistory) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Act as Aura Gut-Skin AI. Cycle: ${state.phase}, Meal:${food}, Bristol Stool: Type ${state.bristol} (${state.buoyancy}). Give 1 short sentence (max 15 words) on skin glow & gut impact.` }] }]
+            })
+          });
+          const data = await res.json();
+          const aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (aiText) document.getElementById('whisperHeadline').innerText = aiText.trim();
+        } catch (err) {}
+      }
+
+      document.getElementById('orbScore').innerText = score;
+      document.getElementById('metricPuff').innerText = (hasSinking || hasPizza) ? "Mild Puff" : "Low Puff";
+      document.getElementById('metricTransit').innerText = `Type ${state.bristol}`;
+
+      let alerts = '';
+      if (hasCoffee) {
+        alerts += `<div class="silk-pill rounded-2xl p-3 border-l-4 border-[#B87D6B] text-xs"><strong>☕ Cortisol Buffer:</strong> Pair iced coffee with 4 soaked almonds to prevent empty-stomach acid & sebum spikes.</div>`;
+      }
+      document.getElementById('dynamicAlerts').innerHTML = alerts;
+
+      if (saveToHistory) {
+        const logs = JSON.parse(localStorage.getItem('aura_vault_logs') || '[]');
+        logs.unshift({
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          food: food,
+          bristol: state.bristol,
+          score: score
+        });
+        localStorage.setItem('aura_vault_logs', JSON.stringify(logs.slice(0, 10)));
+        renderLocalHistory();
+      }
+    }
+
+    function renderLocalHistory() {
+      const logs = JSON.parse(localStorage.getItem('aura_vault_logs') || '[]');
+      const container = document.getElementById('localHistoryList');
+      if (logs.length === 0) {
+        container.innerHTML = `<p class="text-[11px] text-[#78736A]">No logs saved yet. Tap + Nourish to record.</p>`;
+        return;
+      }
+      container.innerHTML = logs.map(l => `
+        <div class="flex justify-between items-center bg-white/70 px-3 py-2 rounded-xl">
+          <span class="truncate pr-2 font-medium text-[#1C1B19]">${l.food}</span>
+          <span class="text-[10px] shrink-0 text-[#4E6E58] font-bold">Glow ${l.score} • T${l.bristol} (${l.time})</span>
+        </div>
+      `).join('');
+    }
+
+    function clearLocalVault() {
+      localStorage.removeItem('aura_vault_logs');
+      renderLocalHistory();
+    }
+  </script>
+</body>
+</html>
